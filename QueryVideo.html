@@ -1,0 +1,168 @@
+<meta charset="utf-8"/>
+<!DOCTYPE html>
+<html>
+<head>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script src="http://www.youtube.com/player_api"></script>
+
+<script>
+
+$(document).ready(function(){
+
+
+//Global Variables
+
+//Make sure to update API_KEY and CHANNEL_KEY with your own ChannelID and API KEY
+var url = "https://www.googleapis.com/youtube/v3/search?key=[API_KEY]&channelId=[CHANNEL_KEY]&part=id&type=video&autoplay=1&maxResults=50&v=2&format=5";
+var j = 0;
+var container = this;
+var videoIDArray = [];
+var durationArray = [];
+var totalTimeInSeconds;
+var totaltimeinmilliseconds;
+var randomVideo;
+var durationAPI;
+var x;
+var randomVideotoString;
+
+function WholeProcess(){
+//parse through all video Ids
+function RandomVideo(){
+	$.ajax({
+    async: false,
+    url: url,
+    success: function(json) {
+//was once using  $.getJSON(url,function(json){  but all sources suggested AJAX, though getJson is shorthand for AJAX
+
+   $.each(json.items, function(i){ 
+		container = json.items[i].id.videoId;
+
+    //store IDs in a videoIdArray array
+			videoIDArray.push([container]);
+	});	
+
+},
+
+  //after finding all 50 results (googleapis URL -> maxResults=50 ) 
+complete: function returnRandomVideo (){
+  //store a randomly chosen ID and set to randomVideo
+	randomVideo = videoIDArray[Math.floor(Math.random()*videoIDArray.length)];
+	randomVideotoString = randomVideo.toString();
+  
+	console.log(randomVideotoString);
+  
+  //not necessary, but can be used later for other APIs, a function to calculate the Duration in miliseconds
+	Duration();
+
+}
+//generate random video
+});
+
+}
+function Duration()
+{
+
+//	var outsideRandomVideo = returnRandomVideo();
+
+
+durationAPI = "https://www.googleapis.com/youtube/v3/videos?id="+randomVideotoString+"&part=contentDetails&key=[API_KEY]"
+	//Set JSON URL
+
+var duration = this;
+
+//JSON to get duration of random generated video
+//$.getJSON(durationAPI,function(json2){
+	$.ajax({
+ //   async: false,
+    url: durationAPI,
+
+    success: function(json2) {
+   $.each(json2.items, function(j){
+duration = json2.items[j].contentDetails.duration;
+	});
+	
+	//make sure duration is a string to pass back
+var durationtoString = duration.toString();
+
+var hours = durationtoString.match(/(\d)+H/); 
+var minutes = durationtoString.match(/(\d)+M/);
+var seconds = durationtoString.match(/(\d)+S/);
+totalTimeInSeconds = 0;
+
+if (hours) {
+  hours = hours[0].replace("H","");
+  totalTimeInSeconds += hours * 60 * 60;
+}
+
+if (minutes) {
+    minutes = minutes[0].replace("M","");
+    totalTimeInSeconds += minutes * 60;
+}
+
+if (seconds) {
+   seconds = seconds[0].replace("S","")
+   totalTimeInSeconds += seconds * 1;
+}
+
+
+totaltimeinmilliseconds = (totalTimeInSeconds*1000);
+console.log("TotalTimeInMiliSeconds:"+ totaltimeinmilliseconds);
+	
+}, complete: function returnDurationandAppendDelete (){
+
+	onYouTubePlayerAPIReady();
+
+}
+});
+
+}
+
+// create youtube player
+var player;
+        function onYouTubePlayerAPIReady() {
+          console.log(randomVideotoString);
+
+            player = new YT.Player('player', {
+              width: '640',
+              height: '390',
+              videoId: randomVideotoString,
+              events: {
+                onReady: onPlayerReady,
+                onStateChange: onPlayerStateChange
+              }
+            });
+        }
+
+        // autoplay video
+        function onPlayerReady(event) {
+            event.target.playVideo();
+        }
+
+        // when video ends
+        function onPlayerStateChange(event) {        
+            if(event.data === 0) {  
+              location.reload(); 	
+              //onYouTubePlayerAPIReady();       
+           //  alert("video finished");
+           
+                
+            }
+        }
+
+//https://developers.google.com/youtube/iframe_api_reference?csw=1
+
+//$("#video").append('<iframe width="560" height="315" src="https://www.youtube.com/embed/'+randomVideo+'?start=001&controls=0&autoplay=1" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>');
+//$("#video").append('<iframe id="player2" src="https://www.youtube.com/embed/'+randomVideo+'?enablejsapi=1" frameborder="0"></iframe>');
+ RandomVideo();
+}
+WholeProcess();
+
+});
+
+</script>
+</head>
+<body>
+
+  <div id="player"></div>
+</body>
+</html>
